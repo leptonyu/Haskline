@@ -4,12 +4,16 @@ import System.Console.Haskline.Env(
      Env
     ,getBuffer
     ,getNextBuffer
+    ,getPrevBuffer
     ,updateBuffer
     ,buffer
     ,addHistory
     ,hisind
     ,hisbuff
     ,history
+    ,runComplete
+    ,prompt
+    ,beautifulPrint
     )
 import System.Console.Haskline.Buffer(
      Buff
@@ -17,6 +21,9 @@ import System.Console.Haskline.Buffer(
     ,getBuff
     ,getNext
     ,insertPrev
+    ,insertsPrev
+    ,peekPrev
+    ,getPrevWord
     ,deletePrev
     ,deleteNext
     ,dropPrev
@@ -31,12 +38,14 @@ import System.Console.Haskline.Buffer(
     ,moveEnd
     )
 
+import Control.Monad(forM_)
+import System.FilePath(pathSeparator)
 import System.IO(
      hGetChar
     ,stdin
     )
+import Data.List as L
 import Data.Map.Strict as M
-
 
 data Command 
     = Move Cursor
@@ -60,7 +69,6 @@ data Cursor
       deriving (Eq, Ord, Show, Read)
 
 type Commands = [(String,Command)]
-
 
 prevStr = "\ESC[D"
 nextStr = "\ESC[C"
@@ -92,6 +100,7 @@ commands =
      ("\ESC[F",  Move End),      -- End
      ("\DEL",    DeletePrev),    -- Backspace
      ("\ESC[3~", DeleteCurr),    -- Del
+     ("\EOT",    DeleteCurr),    -- Del
      ("\v",      DeleteToEnd),   -- C-k
      ("\NAK",    DeleteToStart), -- C-u
      ("\ESC[A",  HistoryPrev),   -- up arrow
@@ -161,6 +170,29 @@ readLoop env = readCommand commands >>= runCommand
                 putStr $ replicate n ' '
                 moveLeft n
                 readLoop $ updateBuffer env dropNext
+          runCommand (Complete)    = do
+                let cmds = words $ getBuffer env
+                    prev = getPrevWord $ buffer env
+                    lstC = peekPrev $ buffer env
+                    pos  = length $ buffer env
+                result <- runComplete env cmds prev lstC
+                case result of
+                  (v,[])  -> readLoop env
+                  (_,[x]) -> do
+                    if x == prev then do 
+                      putChar ' '
+                      readLoop $ updateBuffer env (insertPrev ' ')
+                    else do
+                      let ys = (x L.\\ prev) ++ " "
+                      putStr ys
+                      readLoop $ updateBuffer env (insertsPrev ys)
+                  (x,xs) -> do
+                      putChar '\n'
+                      forM_ (beautifulPrint 80 xs) $ putStrLn
+                      let newLine = getBuffer env ++ (x L.\\ prev)
+                      putStr $ prompt env
+                      putStr newLine
+                      readLoop $ env {buffer = mkBuff newLine}
           runCommand _             = readLoop env
 
 updateHistory :: Env -> Int -> String -> Int -> String -> Env
@@ -189,5 +221,3 @@ moveHistory env step = do
                 replaceLine line newLine
                 readLoop $ updateHistory env ind line ind' newLine
             else readLoop env
-
-

@@ -1,12 +1,18 @@
 module System.Console.Haskline.Readline(
-     readline
+     Actions
+    ,Env
+    ,readline
     ,mkEnv
     ,history
+    ,appendAction
+    ,defaultActions
+    ,findAction
+    ,lineAct
+    ,Status(..)
     ) where
 
 
 import System.Console.Haskline.Env
-import System.Console.Haskline.Buffer as B
 import System.Console.Haskline.Command
 
 

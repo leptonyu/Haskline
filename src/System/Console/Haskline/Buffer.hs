@@ -44,6 +44,9 @@ insertNext y (xs,ys) = (xs,y:ys)
 insertPrev :: a -> Buff a -> Buff a
 insertPrev x (xs,ys) = (x:xs,ys)
 
+insertsPrev :: [a] -> Buff a -> Buff a
+insertsPrev as (xs,ys) = (reverse as ++xs,ys)
+
 deleteNext :: Buff a -> Buff a
 deleteNext (xs,_:ys) =(xs,ys)
 deleteNext b = b 
@@ -77,3 +80,15 @@ getPrev = reverse . fst
 
 getNext :: Buff a -> [a]
 getNext = snd
+
+getPrevWord :: BuffChar -> String
+getPrevWord (xs,_) = reverse $ lastWord xs ""
+    where lastWord ""      ys = ys
+          lastWord (' ':_) ys = ys
+          lastWord (x:xs)  ys = x:lastWord xs ys
+
+getNextWord :: BuffChar -> String
+getNextWord (_,ys) = firstWord ys ""
+    where firstWord ""      ys = ys
+          firstWord (' ':_) ys = ys
+          firstWord (x:xs)  ys = x:firstWord xs ys

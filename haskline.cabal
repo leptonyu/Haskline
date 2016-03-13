@@ -18,12 +18,12 @@ library
   exposed-modules:     System.Console.Haskline
                      , System.Console.Haskline.Buffer
                      , System.Console.Haskline.Readline
-                     , System.Console.Haskline.Action
                      , System.Console.Haskline.Env
                      , System.Console.Haskline.Command
   build-depends:       base >= 4.7 && < 5
                      , containers
                      , directory
+                     , filepath
   default-language:    Haskell2010
 
 executable haskline-exe
